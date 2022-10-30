@@ -3,8 +3,8 @@ use crate::resources::resource_error::ResourceError;
 use crate::resources::resource_file::*;
 
 pub struct Material {
-    vertex_shader_source: String, //idk if the sources need to be saved
-    fragment_shader_source: String,
+    _vertex_shader_source: String, //idk if the sources need to be saved
+    _fragment_shader_source: String,
     vertex_shader: NativeShader,
     fragment_shader: NativeShader,
 }
@@ -26,13 +26,13 @@ impl Material {
     {
 
         let vertex_shader_source = match load_shader(vertex_shader_file) {
-            Ok(source) => source,
-            Err(err) => return Err(ResourceError::LoadingVertexSource(err)),
+            Ok(value) => value,
+            Err(err) => return Err(ResourceError::LoadingFile(err, String::from(vertex_shader_file))),
         };
 
         let fragment_shader_source = match load_shader(fragment_shader_file) {
-            Ok(source) => source,
-            Err(err) => return Err(ResourceError::LoadingFragmentSource(err)),
+            Ok(value) => value,
+            Err(err) => return Err(ResourceError::LoadingFile(err, String::from(fragment_shader_file))),
         };
 
         Self::create(&vertex_shader_source, &fragment_shader_source, gl)
@@ -61,8 +61,8 @@ impl Material {
             };
 
             Ok( Self {
-                vertex_shader_source: String::from(vertex_shader_source),
-                fragment_shader_source: String::from(fragment_shader_source),
+                _vertex_shader_source: String::from(vertex_shader_source),
+                _fragment_shader_source: String::from(fragment_shader_source),
                 vertex_shader,
                 fragment_shader,
             })

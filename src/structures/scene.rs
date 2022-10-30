@@ -1,5 +1,3 @@
-use glow::HasContext;
-
 use crate::resources::{container::Container, resource_error::ResourceError};
 use std::vec::Vec;
 
