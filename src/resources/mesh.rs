@@ -1,5 +1,5 @@
 use glow::*;
-use crate::resources::resource_error::ResourceError;
+use crate::{resources::resource_error::ResourceError, structures::camera::Camera};
 
 pub struct Mesh {
    vertexes: Vec<f32>,
@@ -55,9 +55,11 @@ impl Mesh {
             self.vertexes.len() * std::mem::size_of::<f32>())
     }
 
-    pub fn render(&self, gl: &glow::Context) {
+    pub fn render(&self, gl: &glow::Context, camera: &Camera, program: &NativeProgram) {
         unsafe {
+            let location = gl.get_uniform_location(*program, "camera_matrix");
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.get_vertex_buffer()));
+            gl.uniform_matrix_4_f32_slice(location.as_ref(), false, &camera.get_rotation_matrix().to_cols_array());
             gl.bind_vertex_array(Some(self.get_vertex_array()));
             gl.draw_arrays(glow::TRIANGLES, 0, self.get_vertex_count());
         }

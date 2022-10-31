@@ -3,6 +3,8 @@ use glow::*;
 use crate::resources::container::Container;
 
 use crate::resources::resource_error::ResourceError;
+use crate::structures::camera::Camera;
+use crate::structures::scene::Scene;
 
 pub struct Object {
     program: NativeProgram,
@@ -41,11 +43,11 @@ impl Object {
         program
     }
 
-    pub fn render(&self, gl: &glow::Context, container: &Container) {
+    pub fn render(&self, gl: &glow::Context, container: &Container, camera: &Camera) {
         unsafe {
             gl.use_program(Some(self.program));
         }
-        container.get_mesh(self.mesh_id).render(gl);
+        container.get_mesh(self.mesh_id).render(gl, camera, &self.program);
     }
 
     pub fn destroy(&self, gl: &glow::Context) {

@@ -5,6 +5,7 @@ use crate::resources::mesh::Mesh;
 use crate::resources::material::Material;
 use crate::resources::object::Object;
 
+use crate::structures::camera::Camera;
 use crate::util::ref_dict::*;
 
 use crate::resources::resource_error::ResourceError;
@@ -178,7 +179,7 @@ impl Container {
         self.textures.get_value_id(name)
     }
 
-    pub fn render_object(&self, id: usize, gl: &glow::Context) {
-        self.get_object(id).render(gl, self);
+    pub fn render_object(&self, id: usize, gl: &glow::Context, camera: &Camera) {
+        self.get_object(id).render(gl, self, camera);
     }
 }
