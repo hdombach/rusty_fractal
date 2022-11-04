@@ -8,7 +8,7 @@ pub struct Camera {
 impl Camera {
     pub fn new() -> Self {
         Self {
-            position: Vec3::default(),
+            position: Vec3::new(0.0, 0.0, -3.0),
             rotation: Quat::default(),
         }
     }
@@ -37,7 +37,7 @@ impl Camera {
         Mat4::from_quat(self.rotation)
     }
 
-    pub fn get_translation_matrix(&self) -> Mat4 {
-        Mat4::from_quat(self.rotation) * Mat4::from_translation(self.position)
+    pub fn get_transformation_matrix(&self) -> Mat4 {
+        Mat4::perspective_rh(1.0, 16.0 / 9.0, 0.1, 1000.0) * Mat4::from_translation(self.position) * Mat4::from_quat(self.rotation)
     }
 }

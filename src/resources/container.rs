@@ -35,7 +35,7 @@ impl Container {
             Ok(material) => result.add_material(&String::from("default"), material).unwrap(),
             Err(err) => return Err(err),
         };
-        match Mesh::create_default_triangle(gl) {
+        match Mesh::create_cube(gl) {
             Ok(mesh) => result.add_mesh(&String::from("default"), mesh).unwrap(),
             Err(err) => return Err(err),
         };

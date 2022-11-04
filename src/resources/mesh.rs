@@ -1,3 +1,5 @@
+use std::mem;
+
 use glow::*;
 use crate::{resources::resource_error::ResourceError, structures::camera::Camera};
 
@@ -15,6 +17,57 @@ impl Mesh {
             -0.5, -0.5, 0.0,
             0.5, -0.5, 0.0,
             0.0, 0.5, 0.0
+        ];
+        Mesh::create_from_vertexes(vertexes, gl)
+    }
+
+    pub fn create_cube(
+        gl: &glow::Context) -> Result<Self, ResourceError>
+    {
+        let vertexes: Vec<f32> = vec![
+            1.0, 1.0, -1.0, 1.0, //square 1
+            1.0, -1.0, -1.0, 1.0,
+            -1.0, -1.0, -1.0, 1.0,
+            1.0, 1.0, -1.0, 1.0,
+            -1.0, 1.0, -1.0, 1.0,
+            -1.0, -1.0, -1.0, 1.0,
+
+            1.0, 1.0, 1.0, 1.0, //square 2
+            1.0, -1.0, 1.0, 1.0,
+            -1.0, -1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            -1.0, 1.0, 1.0, 1.0,
+            -1.0, -1.0, 1.0, 1.0,
+
+            1.0, -1.0, 1.0, 1.0, //square 3
+            1.0, -1.0, -1.0, 1.0,
+            -1.0, -1.0, -1.0, 1.0,
+            1.0, -1.0, 1.0, 1.0,
+            -1.0, -1.0, 1.0, 1.0,
+            -1.0, -1.0, -1.0, 1.0,
+
+            1.0, 1.0, 1.0, 1.0, //square 4
+            1.0, 1.0, -1.0, 1.0,
+            -1.0, 1.0, -1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            -1.0, 1.0, 1.0, 1.0,
+            -1.0, 1.0, -1.0, 1.0,
+
+            -1.0, 1.0, 1.0, 1.0, //square 5
+            -1.0, 1.0, -1.0, 1.0,
+            -1.0, -1.0, -1.0, 1.0,
+            -1.0, 1.0, 1.0, 1.0,
+            -1.0, -1.0, 1.0, 1.0,
+            -1.0, -1.0, -1.0, 1.0,
+
+            1.0, 1.0, 1.0, 1.0, //square 6
+            1.0, 1.0, -1.0, 1.0,
+            1.0, -1.0, -1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, -1.0, 1.0, 1.0,
+            1.0, -1.0, -1.0, 1.0,
+
+
         ];
         Mesh::create_from_vertexes(vertexes, gl)
     }
@@ -57,11 +110,11 @@ impl Mesh {
 
     pub fn render(&self, gl: &glow::Context, camera: &Camera, program: &NativeProgram) {
         unsafe {
-            let location = gl.get_uniform_location(*program, "camera_matrix");
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.get_vertex_buffer()));
-            gl.uniform_matrix_4_f32_slice(location.as_ref(), false, &camera.get_rotation_matrix().to_cols_array());
             gl.bind_vertex_array(Some(self.get_vertex_array()));
+            let location = gl.get_uniform_location(*program, "camera_matrix");
+            gl.uniform_matrix_4_f32_slice(location.as_ref(), false, &camera.get_transformation_matrix().to_cols_array());
             gl.draw_arrays(glow::TRIANGLES, 0, self.get_vertex_count());
+            gl.bind_vertex_array(None);
         }
     }
 
@@ -92,8 +145,10 @@ impl Mesh {
             vertexes_u8,
             glow::STATIC_DRAW);
 
-        gl.vertex_attrib_pointer_f32(0, 3, glow::FLOAT, false, 0, 0);
+        gl.vertex_attrib_pointer_f32(0, 4, glow::FLOAT, false, (mem::size_of::<f32>() as i32) * 4, 0);
         gl.enable_vertex_attrib_array(0);
+
+        gl.bind_vertex_array(None);
 
         Ok((vao, vbo))
     }

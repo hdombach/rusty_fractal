@@ -16,6 +16,7 @@ fn main() {
     let options = eframe::NativeOptions {
         multisampling: 8,
         renderer: eframe::Renderer::Glow,
+        depth_buffer: 1,
         ..Default::default()
     };
     eframe::run_native(
