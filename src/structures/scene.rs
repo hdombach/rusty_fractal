@@ -32,13 +32,17 @@ impl Scene {
         &self.main_camera
     }
 
+    pub fn get_camera_mut(&mut self) -> &mut Camera {
+        &mut self.main_camera
+    }
+
     pub fn get_container(&self) -> &Container {
         &self.container
     }
 
     pub fn render(&mut self, gl: &glow::Context) {
-        self.current_rotation_dir = Quat::from_axis_angle(Vec3::new(1.0, 1.0, 0.0), 0.01).normalize() * self.current_rotation_dir;
-        self.main_camera.rotate_camera(Quat::from_axis_angle(self.current_rotation_dir, 0.02).normalize());
+        //self.current_rotation_dir = Quat::from_axis_angle(Vec3::new(1.0, 1.0, 0.0), 0.01).normalize() * self.current_rotation_dir;
+        //self.main_camera.rotate_camera(Quat::from_axis_angle(self.current_rotation_dir, 0.02).normalize());
         for object_id in &self.object_ids {
             self.container.render_object(*object_id, gl, self.get_camera());
         }

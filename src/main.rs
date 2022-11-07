@@ -14,7 +14,7 @@ pub mod structures;
 
 fn main() {
     let options = eframe::NativeOptions {
-        multisampling: 8,
+        multisampling: 0,
         renderer: eframe::Renderer::Glow,
         depth_buffer: 1,
         ..Default::default()
@@ -121,6 +121,7 @@ impl eframe::App for MyApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             self.main_scene.render(ui);
         });
+        ctx.request_repaint();
     }
 
     fn on_exit(&mut self, _gl: Option<&glow::Context>) {
