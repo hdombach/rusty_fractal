@@ -53,17 +53,11 @@ impl Camera {
         Mat4::perspective_rh(1.0, 16.0 / 9.0, 0.1, 1000.0) * Mat4::from_quat(self.rotation) * Mat4::from_translation(self.position)
     }
 
-    fn get_forward_vec(&self) -> Vec3 {
-        (self.get_rotation_matrix().inverse() * Vec4::new(0.0, 0.0, 1.0, 1.0)).xyz()
-    }
-
     fn get_side_vec(&self) -> Vec3 {
-        //self.get_forward_vec().cross(Vec3::new(0.0, 1.0, 0.0))
         (self.get_rotation_matrix().inverse() * Vec4::X).xyz()
     }
 
     fn get_up_vec(&self) -> Vec3 {
-        //self.get_forward_vec().cross(self.get_side_vec())
         (self.get_rotation_matrix().inverse() * Vec4::Y).xyz()
     }
 }
