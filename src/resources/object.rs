@@ -4,7 +4,6 @@ use crate::resources::container::Container;
 
 use crate::resources::resource_error::ResourceError;
 use crate::structures::camera::Camera;
-use crate::structures::scene::Scene;
 
 pub struct Object {
     program: NativeProgram,

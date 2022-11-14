@@ -94,7 +94,7 @@ impl Mesh {
         self.vao
     }
 
-    fn get_vertex_buffer(&self) -> NativeBuffer {
+    fn _get_vertex_buffer(&self) -> NativeBuffer {
         self.vbo
     }
 

@@ -1,24 +1,25 @@
-use eframe::{egui::{self, ImageButton, Modifiers, Key}, epaint::{Vec2, Color32}};
+use eframe::egui;
+use egui::Key;
 use egui::mutex::Mutex;
 use std::{sync::Arc, rc::Rc};
 use crate::structures::scene::Scene;
 
-use super::ui_traits::*;
+use super::{ui_traits::*, camera_view::CameraView};
 
 pub struct SceneView {
-    pub showing_right_panel: bool,
-    pub text_test: String,
-    pub scene: Arc<Mutex<Scene>>,
-    pub shared_state: Rc<crate::ui::shared_state::SharedState>,
+    showing_right_panel: bool,
+    scene: Arc<Mutex<Scene>>,
+    _shared_state: Rc<crate::ui::shared_state::SharedState>,
+    camera_view: CameraView,
 }
 
 impl SceneView {
     pub fn new(scene: Arc<Mutex<Scene>>, shared_state: Rc<crate::ui::shared_state::SharedState>) -> Self {
         Self {
             showing_right_panel: false,
-            text_test: String::new(),
-            scene,
-            shared_state,
+            scene: scene.clone(),
+            _shared_state: shared_state.clone(),
+            camera_view: CameraView::new(scene),
         }
     }
 }
@@ -28,8 +29,7 @@ impl UiElement for SceneView {
 
         if self.showing_right_panel {
             egui::SidePanel::right("component_right_panel").show_inside(ui, |ui| {
-                ui.label("right panel");
-                ui.text_edit_singleline(&mut self.text_test);
+                self.camera_view.render(ui);
             });
         }
         self.scene_viewport(ui);
@@ -55,6 +55,9 @@ impl SceneView {
         let drag_delta = glam::Vec2::new(drag_delta.x * 0.004, drag_delta.y * 0.004);
 
         let move_delta = Self::get_move_delta(ui, 0.05);
+
+        let resolution = glam::Vec2::new(rect.width(), rect.height());
+        scene.lock().get_camera_mut().set_resolution(resolution);
 
         scene.lock().get_camera_mut().pan_camera(drag_delta);
         scene.lock().get_camera_mut().change_relative_position(move_delta);

@@ -51,8 +51,6 @@ impl Container {
         let mut result = Self::new();
         result.load_system_texture(&String::from("right_rectangle.png"), gl)?;
         result.load_system_texture(&String::from("left_rectangle.png"), gl)?;
-        let index = result.get_texture_id(String::from("right_rectangle.png")).unwrap();
-        let test_texture = result.get_texture(index);
         Ok(result)
     }
 

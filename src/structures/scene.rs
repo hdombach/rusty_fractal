@@ -1,13 +1,13 @@
-use glam::{Quat, Vec3, Vec3Swizzles};
+use glam::Vec3;
 
-use crate::{resources::{container::Container, resource_error::ResourceError}, main};
+use crate::resources::{container::Container, resource_error::ResourceError};
 use std::vec::Vec;
 
 use super::camera::Camera;
 
 pub struct Scene {
     main_camera: Camera,
-    current_rotation_dir: Vec3,
+    _current_rotation_dir: Vec3,
     container: Container,
     object_ids: Vec<usize>,
 }
@@ -24,11 +24,11 @@ impl Scene {
             container,
             object_ids,
             main_camera: Camera::new(),
-            current_rotation_dir: Vec3::new(0.0, 0.0, 1.0),
+            _current_rotation_dir: Vec3::new(0.0, 0.0, 1.0),
         })
     }
 
-    pub fn get_camera(&self) -> &Camera {
+    pub fn get_camera<'a>(&'a self) -> &'a Camera {
         &self.main_camera
     }
 

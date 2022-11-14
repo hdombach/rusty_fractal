@@ -1,8 +1,12 @@
+use std::f32::consts::PI;
+
 use glam::*;
 
 pub struct Camera {
    position: Vec3,
    rotation: Quat,
+   resolution: Vec2,
+   fov_y: f32,
 }
 
 impl Camera {
@@ -10,11 +14,16 @@ impl Camera {
         Self {
             position: Vec3::new(0.0, 0.0, -3.0),
             rotation: Quat::default(),
+            resolution: Vec2::new(1920.0, 1080.0),
+            fov_y: PI / 2.0,
         }
     }
 
     pub fn get_position(&self) -> Vec3 {
         self.position
+    }
+    pub fn get_mut_position(&mut self) -> &mut Vec3 {
+        &mut self.position
     }
     pub fn set_position(&mut self, value: Vec3) {
         self.position = value;
@@ -32,11 +41,30 @@ impl Camera {
     pub fn get_rotation_quat(&self) -> Quat {
         self.rotation
     }
+
+    pub fn get_mut_rotation_quat(&mut self) -> &mut Quat {
+        &mut self.rotation
+    }
+    
     pub fn set_rotation_quat(&mut self, value: Quat) {
         self.rotation = value;
     }
     pub fn rotate_camera(&mut self, value: Quat) {
         self.rotation *= value;
+    }
+
+    pub fn get_resolution(&self) -> Vec2 {
+        self.resolution
+    }
+    pub fn set_resolution(&mut self, value: Vec2) {
+        self.resolution = value;
+    }
+
+    pub fn get_fov_y(&self) -> f32 {
+        self.fov_y
+    }
+    pub fn set_fov_y(&mut self, value: f32) {
+        self.fov_y = value;
     }
 
     pub fn pan_camera(&mut self, offset: Vec2) {
@@ -50,7 +78,7 @@ impl Camera {
     }
 
     pub fn get_transformation_matrix(&self) -> Mat4 {
-        Mat4::perspective_rh(1.0, 16.0 / 9.0, 0.1, 1000.0) * Mat4::from_quat(self.rotation) * Mat4::from_translation(self.position)
+        Mat4::perspective_rh(self.fov_y, self.resolution.x / self.resolution.y, 0.1, 1000.0) * Mat4::from_quat(self.rotation) * Mat4::from_translation(self.position)
     }
 
     fn get_side_vec(&self) -> Vec3 {
