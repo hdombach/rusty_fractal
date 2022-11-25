@@ -3,28 +3,73 @@ use std::mem;
 use glow::*;
 use crate::{resources::resource_error::ResourceError, structures::camera::Camera};
 
-pub struct Mesh {
-   vertexes: Vec<f32>,
-   vbo: NativeBuffer,
-   vao: NativeVertexArray,
+use super::shader_attribute::ShaderAttribute;
+
+pub enum VertexShader {
+    Simple(SimpleVertexShader),
+}
+impl VertexShader {
+    pub fn default_simple() -> Self {
+        Self::Simple(SimpleVertexShader::default())
+    }
+    pub fn simple(properties: Vec<(ShaderAttribute, ShaderAttribute)>) -> Self {
+        Self::Simple(SimpleVertexShader::from_vertex_map(properties))
+    }
+    pub fn get_vertex_out(&self) -> &ShaderAttribute {
+        match self {
+            Self::Simple(simple_shader) => return &simple_shader.vertex_out,
+        }
+    }
 }
 
-impl Mesh {
-    pub fn create_default_triangle(
-        gl: &glow::Context) -> Result<Self,ResourceError>
-    {
-        let vertexes: Vec<f32> = vec![
-            -0.5, -0.5, 0.0,
-            0.5, -0.5, 0.0,
-            0.0, 0.5, 0.0
-        ];
-        Mesh::create_from_vertexes(vertexes, gl)
+pub struct SimpleVertexShader {
+    vertex_in: ShaderAttribute,
+    vertex_out: ShaderAttribute,
+    vertex_properties: Vec<(ShaderAttribute, ShaderAttribute)>,
+    camera_matrix: ShaderAttribute,
+}
+impl SimpleVertexShader {
+    pub fn default() -> Self {
+        Self {
+            vertex_in: ShaderAttribute::float4(0, String::from("position")),
+            vertex_out: ShaderAttribute::output_float4(String::from("gl_Position")),
+            vertex_properties: Vec::new(),
+            camera_matrix: ShaderAttribute::uniform_mat4(String::from("camera_matrix")),
+        }
     }
 
-    pub fn create_cube(
-        gl: &glow::Context) -> Result<Self, ResourceError>
-    {
-        let vertexes: Vec<f32> = vec![
+    pub fn from_vertex_map(properties: Vec<(ShaderAttribute, ShaderAttribute)>) -> Self {
+        Self {
+            vertex_in: ShaderAttribute::float4(0, String::from("position")),
+            vertex_out: ShaderAttribute::output_float4(String::from("gl_Position")),
+            vertex_properties: properties,
+            camera_matrix: ShaderAttribute::uniform_mat4(String::from("camera_matrix")),
+        }
+    }
+    pub fn get_vertex_in(&self) -> &ShaderAttribute {
+        &self.vertex_in
+    }
+    pub fn get_vertex_out(&self) -> &ShaderAttribute {
+        &self.vertex_out
+    }
+    pub fn get_vertex_properties(&self) -> &Vec<(ShaderAttribute, ShaderAttribute)> {
+        &self.vertex_properties
+    }
+    pub fn get_camera_matrix(&self) -> &ShaderAttribute {
+        &self.camera_matrix
+    }
+}
+
+pub mod mesh_data {
+    pub fn triangle() -> Vec<f32> {
+        vec![
+            -0.5, -0.5, 0.0,
+            0.5, -0.5, 0.0,
+            0.0, 0.5, 0.0,
+        ]
+    }
+    pub fn cube() -> Vec<f32> {
+        vec![
             1.0, 1.0, -1.0, 1.0, //square 1
             1.0, -1.0, -1.0, 1.0,
             -1.0, -1.0, -1.0, 1.0,
@@ -66,16 +111,24 @@ impl Mesh {
             1.0, 1.0, 1.0, 1.0,
             1.0, -1.0, 1.0, 1.0,
             1.0, -1.0, -1.0, 1.0,
+        ]
+    }
+}
 
 
-        ];
-        Mesh::create_from_vertexes(vertexes, gl)
+pub struct Mesh {
+   vertexes: Vec<f32>,
+   vbo: NativeBuffer,
+   vao: NativeVertexArray,
+   shader: VertexShader,
+}
+
+impl Mesh {
+    pub fn create(vertexes: Vec<f32>, gl: &glow::Context) -> Result<Self, ResourceError> {
+        Self::create_with_shader(vertexes, gl, VertexShader::default_simple())
     }
 
-    pub fn create_from_vertexes(
-        vertexes: Vec<f32>,
-        gl: &glow::Context) -> Result<Self, ResourceError>
-    {
+    pub fn create_with_shader(vertexes: Vec<f32>, gl: &glow::Context, shader: VertexShader) -> Result<Self, ResourceError> {
         let (vao, vbo);
         unsafe {
             (vao, vbo) = match Mesh::create_vertex_buffer(vertexes.clone(), gl) {
@@ -86,7 +139,8 @@ impl Mesh {
         Ok(Self {
             vertexes,
             vbo,
-            vao
+            vao,
+            shader,
         })
     }
 
@@ -106,6 +160,10 @@ impl Mesh {
         std::slice::from_raw_parts(
             self.vertexes.as_ptr() as *const u8,
             self.vertexes.len() * std::mem::size_of::<f32>())
+    }
+
+    pub fn get_shader(&self) -> &VertexShader {
+        &self.shader
     }
 
     pub fn render(&self, gl: &glow::Context, camera: &Camera, program: &NativeProgram) {

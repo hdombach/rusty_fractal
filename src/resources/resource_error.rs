@@ -14,6 +14,7 @@ pub enum ResourceError {
     InvalidShaderSource(String),
     InvalidBuffer(String),
     RefDictError(ref_dict::RefDictError),
+    ProgramError(String),
 }
 
 impl From<ref_dict::RefDictError> for ResourceError {

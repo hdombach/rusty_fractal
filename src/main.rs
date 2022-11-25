@@ -11,6 +11,7 @@ pub mod util;
 pub mod ui;
 pub mod resources;
 pub mod structures;
+pub mod nodes;
 
 fn main() {
     let options = eframe::NativeOptions {
@@ -20,7 +21,7 @@ fn main() {
         ..Default::default()
     };
     eframe::run_native(
-        "My egui App",
+        "Fractal Renderer",
         options,
         Box::new(|cc| Box::new(MyApp::new(cc))),
     );

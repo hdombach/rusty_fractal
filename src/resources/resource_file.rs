@@ -12,7 +12,7 @@ use super::resource_error::ResourceError;
 pub fn load_shader(file_name: &str) -> Result<String, std::io::Error> {
     let dir = match shader_dir(file_name) {
         Ok(dir) => dir,
-        Err(err) => return Err(err),
+        Err(err) => return Err(std::io::Error::new(ErrorKind::Other, format!("{}: ({})", err, file_name))),
     };
     load_file(dir)
 }
@@ -75,9 +75,15 @@ fn system_image_dir(image_name: &str) -> Result<PathBuf, Error> {
 }
 
 fn load_file(dir: PathBuf) -> Result<String, Error> {
-    let file = match File::open(dir) {
+    let file = match File::open(&dir) {
         Ok(file) => file,
-        Err(err) => return Err(err),
+        Err(err) => {
+            let dir = match dir.to_str() {
+                Some(dir) => dir,
+                None => "__UNKNOWN_DIR__",
+            };
+            return Err(std::io::Error::new(ErrorKind::Other, format!("{} ({})", err, dir)));
+        },
     };
     let mut buf_read = BufReader::new(file);
     let mut result = String::new();

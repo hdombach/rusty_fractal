@@ -1,5 +1,6 @@
 use eframe::egui;
 use eframe::epaint::TextureHandle;
+use glam::Vec3;
 
 use crate::resources::mesh::Mesh;
 use crate::resources::material::Material;
@@ -10,6 +11,7 @@ use crate::util::ref_dict::*;
 
 use crate::resources::resource_error::ResourceError;
 
+use super::mesh::mesh_data;
 use super::resource_file::load_system_texture;
 
 pub struct Container {
@@ -31,11 +33,8 @@ impl Container {
 
     pub fn default(gl: &glow::Context) -> Result<Self, ResourceError> {
         let mut result = Self::new();
-        match Material::create_default(gl) {
-            Ok(material) => result.add_material(&String::from("default"), material).unwrap(),
-            Err(err) => return Err(err),
-        };
-        match Mesh::create_cube(gl) {
+        result.add_material(&String::from("default"), Material::create_solid_color(Vec3::new(0.5, 0.5, 1.0))).unwrap();
+        match Mesh::create(mesh_data::cube(), gl) {
             Ok(mesh) => result.add_mesh(&String::from("default"), mesh).unwrap(),
             Err(err) => return Err(err),
         };
