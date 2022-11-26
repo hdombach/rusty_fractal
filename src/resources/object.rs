@@ -52,6 +52,7 @@ impl Object {
         let material = container.get_material(self.material_id);
 
         let vertex_shader_source = shader_gen::gen_vertex_shader(mesh);
+        println!("the vertex shader is:\n{}", vertex_shader_source);
 
         let vertex_shader = match Self::get_shader(&vertex_shader_source, glow::VERTEX_SHADER, gl) {
             Ok(shader) => shader,
@@ -59,6 +60,7 @@ impl Object {
         };
 
         let fragment_shader_source = shader_gen::gen_material_shader(material, mesh);
+        println!("the fragment shader is:\n{}", fragment_shader_source);
 
         let fragment_shader = match Self::get_shader(&fragment_shader_source, glow::FRAGMENT_SHADER, gl) {
             Ok(shader) => shader,

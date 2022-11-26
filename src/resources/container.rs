@@ -34,7 +34,7 @@ impl Container {
     pub fn default(gl: &glow::Context) -> Result<Self, ResourceError> {
         let mut result = Self::new();
         result.add_material(&String::from("default"), Material::create_solid_color(Vec3::new(0.5, 0.5, 1.0))).unwrap();
-        match Mesh::create(mesh_data::cube(), gl) {
+        match Mesh::create_with_shader(mesh_data::cube_with_normals(), gl, super::mesh::VertexShader::default_simple_with_normal()) {
             Ok(mesh) => result.add_mesh(&String::from("default"), mesh).unwrap(),
             Err(err) => return Err(err),
         };

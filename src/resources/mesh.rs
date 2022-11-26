@@ -12,12 +12,23 @@ impl VertexShader {
     pub fn default_simple() -> Self {
         Self::Simple(SimpleVertexShader::default())
     }
+    pub fn default_simple_with_normal() -> Self {
+        let properties = vec![
+            (ShaderAttribute::float3(1, String::from("normal_in")), ShaderAttribute::output_float3(String::from("normal"))),
+        ];
+        Self::Simple(SimpleVertexShader::from_vertex_map(properties))
+    }
     pub fn simple(properties: Vec<(ShaderAttribute, ShaderAttribute)>) -> Self {
         Self::Simple(SimpleVertexShader::from_vertex_map(properties))
     }
     pub fn get_vertex_out(&self) -> &ShaderAttribute {
         match self {
             Self::Simple(simple_shader) => return &simple_shader.vertex_out,
+        }
+    }
+    pub fn apply_attributes(&self, gl: &glow::Context) {
+        match self {
+            Self::Simple(simple_shader) => simple_shader.apply_attributes(gl),
         }
     }
 }
@@ -57,6 +68,12 @@ impl SimpleVertexShader {
     }
     pub fn get_camera_matrix(&self) -> &ShaderAttribute {
         &self.camera_matrix
+    }
+    pub fn apply_attributes(&self, gl: &glow::Context) {
+        self.vertex_in.apply_attrib(gl);
+        for property in &self.vertex_properties {
+            property.0.apply_attrib(gl);
+        }
     }
 }
 
@@ -113,6 +130,53 @@ pub mod mesh_data {
             1.0, -1.0, -1.0, 1.0,
         ]
     }
+
+    pub fn cube_with_normals() -> Vec<f32> {
+        vec![
+            1.0, 1.0, -1.0, 1.0, 0.0, 0.0, -1.0,//square 1
+            1.0, -1.0, -1.0, 1.0, 0.0, 0.0, -1.0,
+            -1.0, -1.0, -1.0, 1.0, 0.0, 0.0, -1.0,
+            1.0, 1.0, -1.0, 1.0, 0.0, 0.0, -1.0,
+            -1.0, 1.0, -1.0, 1.0, 0.0, 0.0, -1.0,
+            -1.0, -1.0, -1.0, 1.0, 0.0, 0.0, -1.0,
+
+            1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, //square 2
+            1.0, -1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+            -1.0, -1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+            1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+            -1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+            -1.0, -1.0, 1.0, 1.0, 0.0, 0.0, 1.0,
+
+            1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 0.0, //square 3
+            1.0, -1.0, -1.0, 1.0, 0.0, -1.0, 0.0,
+            -1.0, -1.0, -1.0, 1.0, 0.0, -1.0, 0.0,
+            1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 0.0,
+            -1.0, -1.0, 1.0, 1.0, 0.0, -1.0, 0.0,
+            -1.0, -1.0, -1.0, 1.0, 0.0, -1.0, 0.0,
+
+            1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, //square 4
+            1.0, 1.0, -1.0, 1.0, 0.0, 1.0, 0.0,
+            -1.0, 1.0, -1.0, 1.0, 0.0, 1.0, 0.0,
+            1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+            -1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0,
+            -1.0, 1.0, -1.0, 1.0, 0.0, 1.0, 0.0,
+
+            -1.0, 1.0, 1.0, 1.0, -1.0, 0.0, 0.0, //square 5
+            -1.0, 1.0, -1.0, 1.0, -1.0, 0.0, 0.0,
+            -1.0, -1.0, -1.0, 1.0, -1.0, 0.0, 0.0,
+            -1.0, 1.0, 1.0, 1.0, -1.0, 0.0, 0.0,
+            -1.0, -1.0, 1.0, 1.0, -1.0, 0.0, 0.0,
+            -1.0, -1.0, -1.0, 1.0, -1.0, 0.0, 0.0,
+
+            1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, //square 6
+            1.0, 1.0, -1.0, 1.0, 1.0, 0.0, 0.0,
+            1.0, -1.0, -1.0, 1.0, 1.0, 0.0, 0.0,
+            1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0,
+            1.0, -1.0, 1.0, 1.0, 1.0, 0.0, 0.0,
+            1.0, -1.0, -1.0, 1.0, 1.0, 0.0, 0.0,
+        ]
+    }
+
 }
 
 
@@ -131,7 +195,7 @@ impl Mesh {
     pub fn create_with_shader(vertexes: Vec<f32>, gl: &glow::Context, shader: VertexShader) -> Result<Self, ResourceError> {
         let (vao, vbo);
         unsafe {
-            (vao, vbo) = match Mesh::create_vertex_buffer(vertexes.clone(), gl) {
+            (vao, vbo) = match Mesh::create_vertex_buffer(vertexes.clone(), &shader, gl) {
                 Ok(pair) => pair,
                 Err(err) => return Err(err),
             };
@@ -178,6 +242,7 @@ impl Mesh {
 
     unsafe fn create_vertex_buffer(
         vertexes: Vec<f32>,
+        shader: &VertexShader,
         gl: &glow::Context
     ) -> Result<(NativeVertexArray, NativeBuffer), ResourceError> {
         let vao = match gl.create_vertex_array() {
@@ -203,7 +268,7 @@ impl Mesh {
             vertexes_u8,
             glow::STATIC_DRAW);
 
-        gl.vertex_attrib_pointer_f32(0, 4, glow::FLOAT, false, (mem::size_of::<f32>() as i32) * 4, 0);
+        shader.apply_attributes(gl);
         gl.enable_vertex_attrib_array(0);
 
         gl.bind_vertex_array(None);

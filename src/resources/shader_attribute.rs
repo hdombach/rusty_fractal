@@ -1,4 +1,6 @@
-use glow::HasContext;
+use std::mem::size_of;
+
+use glow::{HasContext, Context};
 
 pub struct ShaderAttribute {
     index: Option<u32>,
@@ -28,7 +30,8 @@ impl ShaderAttribute {
     pub fn apply_attrib(&self, gl: &glow::Context) {
         unsafe {
             if let Some(index) = self.index() {
-                gl.vertex_attrib_pointer_f32(index, self.size(), self.data_type(), false, 0, 0);
+                println!("vertex attrib, index: {}, size: {}, data_type: {}, size: {}, offset: {}", index, self.size(), self.data_type(), size_of::<f32>() as i32 * self.size(), 0);
+                gl.vertex_attrib_pointer_f32(index, self.size(), self.data_type(), false, size_of::<f32>() as i32 * self.size(), 0);
             } else {
                 todo!("add error logging")
             }

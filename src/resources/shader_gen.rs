@@ -42,7 +42,7 @@ fn get_simple_vertex_shader(shader: &SimpleVertexShader) -> String {
 
     let mut vertex_code = format!("vec4 _transformed_position = {} * {};\n", shader.get_camera_matrix().name(), shader.get_vertex_in().name());
     for property in shader.get_vertex_properties() {
-        vertex_code += format!("{} = {};\n", property.0.name(), property.1.name()).as_str();
+        vertex_code += format!("{} = {};\n", property.1.name(), property.0.name()).as_str();
     }
     vertex_code += &format!("{} = _transformed_position;\n", shader.get_vertex_out().name());
     let properties = vec![
