@@ -1,9 +1,9 @@
-use std::mem;
+use std::mem::{self, size_of};
 
 use glow::*;
 use crate::{resources::resource_error::ResourceError, structures::camera::Camera};
 
-use super::shader_attribute::ShaderAttribute;
+use super::shader_attribute::{ShaderAttribute, ShaderAttributePair};
 
 pub enum VertexShader {
     Simple(SimpleVertexShader),
@@ -14,11 +14,11 @@ impl VertexShader {
     }
     pub fn default_simple_with_normal() -> Self {
         let properties = vec![
-            (ShaderAttribute::float3(1, String::from("normal_in")), ShaderAttribute::output_float3(String::from("normal"))),
+            ShaderAttributePair::float3(1, String::from("normal")),
         ];
         Self::Simple(SimpleVertexShader::from_vertex_map(properties))
     }
-    pub fn simple(properties: Vec<(ShaderAttribute, ShaderAttribute)>) -> Self {
+    pub fn simple(properties: Vec<ShaderAttributePair>) -> Self {
         Self::Simple(SimpleVertexShader::from_vertex_map(properties))
     }
     pub fn get_vertex_out(&self) -> &ShaderAttribute {
@@ -31,12 +31,19 @@ impl VertexShader {
             Self::Simple(simple_shader) => simple_shader.apply_attributes(gl),
         }
     }
+    pub fn get_normal(&self) -> Option<&ShaderAttributePair> {
+        match self {
+            Self::Simple(simple_shader) => {
+                simple_shader.get_vertex_property_with_name(String::from("normal"))
+            }
+        }
+    }
 }
 
 pub struct SimpleVertexShader {
     vertex_in: ShaderAttribute,
     vertex_out: ShaderAttribute,
-    vertex_properties: Vec<(ShaderAttribute, ShaderAttribute)>,
+    vertex_properties: Vec<ShaderAttributePair>,
     camera_matrix: ShaderAttribute,
 }
 impl SimpleVertexShader {
@@ -49,7 +56,7 @@ impl SimpleVertexShader {
         }
     }
 
-    pub fn from_vertex_map(properties: Vec<(ShaderAttribute, ShaderAttribute)>) -> Self {
+    pub fn from_vertex_map(properties: Vec<ShaderAttributePair>) -> Self {
         Self {
             vertex_in: ShaderAttribute::float4(0, String::from("position")),
             vertex_out: ShaderAttribute::output_float4(String::from("gl_Position")),
@@ -63,16 +70,33 @@ impl SimpleVertexShader {
     pub fn get_vertex_out(&self) -> &ShaderAttribute {
         &self.vertex_out
     }
-    pub fn get_vertex_properties(&self) -> &Vec<(ShaderAttribute, ShaderAttribute)> {
+    pub fn get_vertex_properties(&self) -> &Vec<ShaderAttributePair> {
         &self.vertex_properties
+    }
+    pub fn get_vertex_property(&self, index: usize) -> &ShaderAttributePair {
+        &self.vertex_properties[index]
+    }
+    pub fn get_vertex_property_with_name(&self, name: String) -> Option<&ShaderAttributePair> {
+        for property in &self.vertex_properties {
+            if property.get_name() == &name {
+                return Some(&property)
+            }
+        }
+        None
     }
     pub fn get_camera_matrix(&self) -> &ShaderAttribute {
         &self.camera_matrix
     }
     pub fn apply_attributes(&self, gl: &glow::Context) {
-        self.vertex_in.apply_attrib(gl);
+        let mut size = self.get_vertex_in().get_stride();
         for property in &self.vertex_properties {
-            property.0.apply_attrib(gl);
+            size += property.get_attribute_in().get_stride();
+        }
+        //self.get_vertex_in().apply_attrib_with_stride(gl, size);
+        unsafe {
+            let size = size_of::<f32>() as i32;
+            gl.vertex_attrib_pointer_f32(0, 4, glow::FLOAT, false, size * 7, 0);
+            gl.vertex_attrib_pointer_f32(1, 3, glow::FLOAT, false, size * 7, size * 4);
         }
     }
 }
@@ -269,7 +293,9 @@ impl Mesh {
             glow::STATIC_DRAW);
 
         shader.apply_attributes(gl);
+        //gl.vertex_attrib_pointer_f32(0, 4, glow::FLOAT, false, (size_of::<f32>() as i32) * 7, 0);
         gl.enable_vertex_attrib_array(0);
+        gl.enable_vertex_attrib_array(1);
 
         gl.bind_vertex_array(None);
 

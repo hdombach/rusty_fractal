@@ -4,17 +4,27 @@ use super::{resource_file::load_shader, mesh::{Mesh, SimpleVertexShader, VertexS
 
 pub fn gen_material_shader(material: &Material, mesh: &Mesh) -> String {
     match material {
-        Material::SolidColor(solid_material) => get_solid_color_material_shader(solid_material),
+        Material::SolidColor(solid_material) => get_solid_color_material_shader(solid_material, mesh),
     }
 }
 
-fn get_solid_color_material_shader(shader: &SolidColorMaterial) -> String {
+fn get_solid_color_material_shader(shader: &SolidColorMaterial, mesh: &Mesh) -> String {
     let outputs = shader.get_color_out().as_fragment_shader_out();
-    let vertex_code = format!("{} = {};", shader.get_color_out().name(), vec3_as_glsl_vec4(shader.get_color(), 1.0));
+    let mut fragment_code = format!("{} = {};\n", shader.get_color_out().name(), vec3_as_glsl_vec4(shader.get_color(), 1.0));
+    let mut inputs = String::new();
+    if let Some(normal) = mesh.get_shader().get_normal() {
+        inputs += &normal.get_attribute_out().as_fragment_shader_in();
+
+        fragment_code += "vec3 _light_dir = normalize(vec3(-1.0, -1.0, 0.0));\n";
+        fragment_code += &format!("float _diffuse = dot(_light_dir, {}) * 0.1 + 0.5;\n", normal.get_name());
+        fragment_code += &format!("{}.xyz *= _diffuse;\n", shader.get_color_out().name());
+        //fragment_code += "color_out.xyz = normal;\n";
+    }
 
     let properties = vec![
+        (String::from("INPUTS"), inputs),
         (String::from("OUTPUTS"), outputs),
-        (String::from("FRAGMENT_CODE"), vertex_code),
+        (String::from("FRAGMENT_CODE"), fragment_code),
     ];
     let template_fragment_source = match load_shader("template_fragment.glsl") {
         Ok(source) => source,
@@ -32,17 +42,17 @@ pub fn gen_vertex_shader(mesh: &Mesh) -> String {
 fn get_simple_vertex_shader(shader: &SimpleVertexShader) -> String {
     let mut inputs = shader.get_vertex_in().as_vertex_shader_in();
     for property in shader.get_vertex_properties() {
-        inputs += property.0.as_vertex_shader_in().as_str();
+        inputs += property.get_attribute_in().as_vertex_shader_in().as_str();
     }
 
     let mut outputs = String::new();
     for property in shader.get_vertex_properties() {
-        outputs += property.1.as_vertex_shader_out().as_str();
+        outputs += property.get_attribute_out().as_vertex_shader_out().as_str();
     }
 
     let mut vertex_code = format!("vec4 _transformed_position = {} * {};\n", shader.get_camera_matrix().name(), shader.get_vertex_in().name());
     for property in shader.get_vertex_properties() {
-        vertex_code += format!("{} = {};\n", property.1.name(), property.0.name()).as_str();
+        vertex_code += format!("{} = {};\n", property.get_attribute_out().name(), property.get_attribute_in().name()).as_str();
     }
     vertex_code += &format!("{} = _transformed_position;\n", shader.get_vertex_out().name());
     let properties = vec![
