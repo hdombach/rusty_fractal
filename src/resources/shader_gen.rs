@@ -16,9 +16,8 @@ fn get_solid_color_material_shader(shader: &SolidColorMaterial, mesh: &Mesh) -> 
         inputs += &normal.get_attribute_out().as_fragment_shader_in();
 
         fragment_code += "vec3 _light_dir = normalize(vec3(-1.0, -1.0, 0.0));\n";
-        fragment_code += &format!("float _diffuse = dot(_light_dir, {}) * 0.1 + 0.5;\n", normal.get_name());
+        fragment_code += &format!("float _diffuse = dot(_light_dir, {}) * 0.4 + 0.5;\n", normal.get_name());
         fragment_code += &format!("{}.xyz *= _diffuse;\n", shader.get_color_out().name());
-        //fragment_code += "color_out.xyz = normal;\n";
     }
 
     let properties = vec![

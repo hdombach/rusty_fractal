@@ -88,15 +88,16 @@ impl SimpleVertexShader {
         &self.camera_matrix
     }
     pub fn apply_attributes(&self, gl: &glow::Context) {
-        let mut size = self.get_vertex_in().get_stride();
+        let mut stride = self.get_vertex_in().get_stride();
         for property in &self.vertex_properties {
-            size += property.get_attribute_in().get_stride();
+            stride += property.get_attribute_in().get_stride();
         }
-        //self.get_vertex_in().apply_attrib_with_stride(gl, size);
-        unsafe {
-            let size = size_of::<f32>() as i32;
-            gl.vertex_attrib_pointer_f32(0, 4, glow::FLOAT, false, size * 7, 0);
-            gl.vertex_attrib_pointer_f32(1, 3, glow::FLOAT, false, size * 7, size * 4);
+        let mut offset = 0;
+        self.get_vertex_in().apply_attrib_with_stride_offset(gl, stride, offset);
+        offset += self.get_vertex_in().get_stride();
+        for property in &self.vertex_properties {
+            property.get_attribute_in().apply_attrib_with_stride_offset(gl, stride, offset);
+            offset += property.get_attribute_in().get_stride();
         }
     }
 }

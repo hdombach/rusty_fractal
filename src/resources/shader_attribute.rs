@@ -67,25 +67,17 @@ impl ShaderAttribute {
     }
 
     pub fn apply_attrib(&self, gl: &glow::Context) {
-        unsafe {
-            if let Some(index) = self.index() {
-                println!("vertex attrib, index: {}, size: {}, data_type: {}, size: {}, offset: {}", index, self.size(), self.data_type(), size_of::<f32>() as i32 * self.size(), 0);
-                gl.vertex_attrib_pointer_f32(index, self.size(), self.data_type(), false, 0, 0);
-            } else {
-                todo!("add error logging")
-            }
-        }
+        self.apply_attrib_with_stride_offset(gl, 0, 0);
     }
-    pub fn apply_attrib_with_stride(&self, gl: &glow::Context, stride: i32) {
+    pub fn apply_attrib_with_stride_offset(&self, gl: &glow::Context, stride: i32, offset: i32) {
         unsafe {
             if let Some(index) = self.index() {
                 println!("vertex attrib, index: {}, size: {}, data_type: {}, size: {}, offset: {}", index, self.size(), self.data_type(), size_of::<f32>() as i32 * self.size(), 0);
-                gl.vertex_attrib_pointer_f32(index, self.size(), self.data_type(), false, stride, 0);
+                gl.vertex_attrib_pointer_f32(index, self.size(), self.data_type(), false, stride, offset);
             } else {
                 todo!("add error logging")
             }
         }
-
     }
 
     pub fn as_vertex_shader_in(&self) -> String {
