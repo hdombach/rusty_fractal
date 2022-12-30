@@ -1,7 +1,4 @@
 use glam::Vec3;
-use glow::*;
-use crate::resources::resource_error::ResourceError;
-use crate::resources::resource_file::*;
 
 use super::shader_attribute::ShaderAttribute;
 

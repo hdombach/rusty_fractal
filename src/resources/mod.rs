@@ -2,7 +2,7 @@ pub mod container;
 pub mod mesh;
 pub mod object;
 pub mod material;
-pub mod resource_error;
 pub mod resource_file;
 pub mod shader_gen;
 pub mod shader_attribute;
+pub mod parser;

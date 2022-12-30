@@ -2,22 +2,22 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
 use std::path::PathBuf;
-use std::io::{Error, ErrorKind};
 use eframe::egui;
+use eframe::egui::TextBuffer;
 use eframe::epaint::TextureHandle;
 use image;
 
-use super::resource_error::ResourceError;
+use crate::util::error::Error;
 
-pub fn load_shader(file_name: &str) -> Result<String, std::io::Error> {
+pub fn load_shader(file_name: &str) -> Result<String, Error> {
     let dir = match shader_dir(file_name) {
         Ok(dir) => dir,
-        Err(err) => return Err(std::io::Error::new(ErrorKind::Other, format!("{}: ({})", err, file_name))),
+        Err(err) => return Err(err),
     };
     load_file(dir)
 }
 
-pub fn load_system_texture(image_name: &str, gl: &egui::Context) -> Result<TextureHandle, ResourceError> {
+pub fn load_system_texture(image_name: &str, gl: &egui::Context) -> Result<TextureHandle, Error> {
     let image = match load_system_image(image_name) {
         Ok(value) => value,
         Err(err) => return Err(err),
@@ -25,14 +25,14 @@ pub fn load_system_texture(image_name: &str, gl: &egui::Context) -> Result<Textu
     Ok(gl.load_texture(image_name, image, egui::TextureFilter::Linear))
 }
 
-pub fn load_system_image(image_name: &str) -> Result<egui::ColorImage, ResourceError> {
+pub fn load_system_image(image_name: &str) -> Result<egui::ColorImage, Error> {
     let path = match system_image_dir(image_name) {
         Ok(value) => value,
-        Err(err) => return Err(ResourceError::LoadingFile(err, String::from(image_name))),
+        Err(err) => return Err(err),
     };
     let image = match image::io::Reader::open(&path) {
         Ok(value) => value,
-        Err(err) => return Err(ResourceError::LoadingFile(err, path.into_os_string().into_string().unwrap())),
+        Err(err) => return Err(Error::loading_file(err, String::from(image_name))),
     };
   
     let image = image.decode()?;
@@ -48,7 +48,7 @@ pub fn load_system_image(image_name: &str) -> Result<egui::ColorImage, ResourceE
 fn asset_dir() -> Result<PathBuf, Error> {
     let mut result = match dirs::home_dir() {
         Some(dir) => dir,
-        None => return Err(Error::new(ErrorKind::Other, "Could not find home dir"))
+        None => return Err(Error::invalid_home_dir()),
     };
     result.push(".rusty_fractal");
     Ok(result)
@@ -74,7 +74,17 @@ fn system_image_dir(image_name: &str) -> Result<PathBuf, Error> {
     Ok(result)
 }
 
-fn load_file(dir: PathBuf) -> Result<String, Error> {
+pub fn mesh_dir(mesh_name: &str) -> Result<PathBuf, Error> {
+    let mut result = match asset_dir() {
+        Ok(dir) => dir,
+        Err(err) => return Err(err),
+    };
+    result.push("meshes");
+    result.push(mesh_name);
+    Ok(result)
+}
+
+pub fn load_file(dir: PathBuf) -> Result<String, Error> {
     let file = match File::open(&dir) {
         Ok(file) => file,
         Err(err) => {
@@ -82,14 +92,30 @@ fn load_file(dir: PathBuf) -> Result<String, Error> {
                 Some(dir) => dir,
                 None => "__UNKNOWN_DIR__",
             };
-            return Err(std::io::Error::new(ErrorKind::Other, format!("{} ({})", err, dir)));
+            return Err(Error::loading_file(err, String::from(dir.as_str())));
         },
     };
     let mut buf_read = BufReader::new(file);
     let mut result = String::new();
     match buf_read.read_to_string(&mut result) {
         Ok(_) => (),
-        Err(err) => return Err(err),
+        Err(err) => return Err(Error::loading_file(err, String::from(dir.to_str().unwrap()))),
     }
     Ok(result)
+}
+
+pub fn load_file_raw_vec(dir: PathBuf) -> Result<Vec<u8>, Error> {
+    let mut file = match File::open(&dir) {
+        Ok(file) => file,
+        Err(err) => {
+            let dir = match dir.to_str() {
+                Some(dir) => dir,
+                None => "__UNKNOWN_DIR__",
+            };
+            return Err(Error::loading_file(err, String::from(dir)));
+        },
+    };
+    let mut result = Vec::new();
+    file.read_to_end(&mut result); //TODO do stuff with error handling
+    return Ok(result);
 }

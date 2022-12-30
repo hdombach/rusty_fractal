@@ -1,6 +1,6 @@
 use glam::Vec3;
 
-use crate::resources::{container::Container, resource_error::ResourceError};
+use crate::{resources::container::Container, util::error::Error};
 use std::vec::Vec;
 
 use super::camera::Camera;
@@ -13,13 +13,14 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn default(gl: &glow::Context) -> Result<Self, ResourceError> {
+    pub fn default(gl: &glow::Context) -> Result<Self, Error> {
         let container = match Container::default(gl) {
             Ok(value) => value,
             Err(err) => return Err(err),
         };
         let mut object_ids = Vec::new();
         object_ids.push(container.get_object_id(String::from("default")).unwrap());
+        //object_ids.push(container.get_object_id(String::from("cube_mesh")).unwrap());
         Ok(Self {
             container,
             object_ids,

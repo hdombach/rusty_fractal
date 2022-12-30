@@ -7,12 +7,12 @@ use crate::resources::material::Material;
 use crate::resources::object::Object;
 
 use crate::structures::camera::Camera;
+use crate::util::error::{Error, ErrorKind};
 use crate::util::ref_dict::*;
 
-use crate::resources::resource_error::ResourceError;
-
-use super::mesh::mesh_data;
-use super::resource_file::load_system_texture;
+use super::mesh::mesh_data::{self, cube_with_normals};
+use super::parser::parse_mesh;
+use super::resource_file::{load_system_texture, mesh_dir};
 
 pub struct Container {
     meshes: RefDict<String, Mesh>,
@@ -31,22 +31,31 @@ impl Container {
         }
     }
 
-    pub fn default(gl: &glow::Context) -> Result<Self, ResourceError> {
+    pub fn default(gl: &glow::Context) -> Result<Self, Error> {
         let mut result = Self::new();
         result.add_material(&String::from("default"), Material::create_solid_color(Vec3::new(0.5, 0.5, 1.0))).unwrap();
-        match Mesh::create_with_shader(mesh_data::cube_with_normals(), gl, super::mesh::VertexShader::default_simple_with_normal()) {
+        /*match Mesh::create_with_shader(mesh_data::cube_with_normals(), gl, super::mesh::VertexShader::default_simple_with_normal()) {
             Ok(mesh) => result.add_mesh(&String::from("default"), mesh).unwrap(),
             Err(err) => return Err(err),
-        };
+        };*/
+        let mesh = parse_mesh(mesh_dir("gargoyle.ply").unwrap(), gl)?;
+        //let cube_mesh = Mesh::create_with_shader(cube_with_normals(), gl, super::mesh::VertexShader::default_simple_with_normal())?;
+        result.add_mesh(&String::from("default"), mesh)?;
+        //result.add_mesh(&String::from("cube_mesh"), cube_mesh)?;
         result.create_object(
             &String::from("default"),
             &String::from("default"),
             &String::from("default"),
             gl).unwrap();
+        /*result.create_object(
+            &String::from("cube_mesh"),
+            &String::from("default"),
+            &String::from("cube_mesh"),
+            gl).unwrap();*/
         return Ok(result);
     }
 
-    pub fn system_default(gl: &egui::Context) -> Result<Self, ResourceError> {
+    pub fn system_default(gl: &egui::Context) -> Result<Self, Error> {
         let mut result = Self::new();
         result.load_system_texture(&String::from("right_rectangle.png"), gl)?;
         result.load_system_texture(&String::from("left_rectangle.png"), gl)?;
@@ -58,23 +67,21 @@ impl Container {
         object_name: &String,
         material_name: &String,
         mesh_name: &String,
-        gl: &glow::Context) -> Result<(), ResourceError>
+        gl: &glow::Context) -> Result<(), Error>
     {
         let material_id = match self.materials.add_reference(&material_name) {
             Ok(id) => id,
-            Err(err) => match err {
-                RefDictError::ValueDoesNotExist =>return Err(
-                    ResourceError::MaterialDoesNotExist),
-                _ => panic!("Invalid error"),
-            },
+            Err(err) => match err.get_kind() {
+                ErrorKind::ValueDoesNotExist => return Err(Error::material_does_not_exist()),
+                    _ => panic!("Invalid error"),
+            }
         };
         let mesh_id = match self.meshes.add_reference(&mesh_name) {
             Ok(id) => id,
-            Err(err) => match err {
-                RefDictError::ValueDoesNotExist => return Err(
-                    ResourceError::MeshDoesNotExist),
+            Err(err) => match err.get_kind() {
+                ErrorKind::ValueDoesNotExist => return Err(Error::mesh_does_not_exist()),
                 _ => panic!("Invalid error"),
-            },
+            }
         };
 
         let new_object = match Object::create(
@@ -89,9 +96,8 @@ impl Container {
 
         match self.objects.add_value(object_name, new_object) {
             Ok(_) => return Ok(()),
-            Err(err) => match err {
-                RefDictError::ValueAlreadyExists => return Err(
-                    ResourceError::ObjectAlreadyExists),
+            Err(err) => match err.get_kind() {
+                ErrorKind::ValueAlreadyExists => return Err(Error::object_already_exists()),
                 _ => panic!("Invalid error")
             },
         }
@@ -99,7 +105,7 @@ impl Container {
 
     pub fn add_mesh(&mut self,
                     name: &String,
-                    mesh: Mesh) -> Result<(), RefDictError>
+                    mesh: Mesh) -> Result<(), Error>
     {
         self.meshes.add_value(name, mesh)
     }
@@ -107,44 +113,42 @@ impl Container {
     pub fn add_material(
         &mut self,
         name: &String,
-        material: Material) -> Result<(), RefDictError>
+        material: Material) -> Result<(), Error>
     {
         self.materials.add_value(name, material)
     }
 
     pub fn add_texture(&mut self,
                      name: &String,
-                     texture: TextureHandle) -> Result<(), RefDictError> {
+                     texture: TextureHandle) -> Result<(), Error> {
         self.textures.add_value(name, texture)
     }
 
     pub fn load_system_texture(&mut self,
                                name: &String,
-                               gl: &egui::Context) -> Result<(), ResourceError> {
+                               gl: &egui::Context) -> Result<(), Error> {
         let texture = load_system_texture(name, gl)?;
         self.textures.add_value(name, texture)?;
         Ok(())
     }
 
     pub fn add_object_reference(
-        &mut self, name: String) -> Result<usize, ResourceError>
+        &mut self, name: String) -> Result<usize, Error>
     {
         match self.objects.add_reference(&name) {
             Ok(id) => return Ok(id),
-            Err(err) => match err {
-                RefDictError::ValueDoesNotExist => return Err(
-                    ResourceError::ObjectDoesNotExist),
+            Err(err) => match err.get_kind() {
+                ErrorKind::ValueDoesNotExist => return Err(Error::object_does_not_exist()),
                 _ => panic!("Invalid error")
             },
         }
     }
 
-    pub fn add_texture_reference(&mut self, name: String) -> Result<usize, ResourceError> {
+    pub fn add_texture_reference(&mut self, name: String) -> Result<usize, Error> {
         match self.objects.add_reference(&name) {
             Ok(id) => return Ok(id),
-            Err(err) => match err {
-                RefDictError::ValueDoesNotExist => return Err(
-                    ResourceError::TextureDoesNotExist),
+            Err(err) => match err.get_kind() {
+                ErrorKind::ValueDoesNotExist => return Err(Error::texture_does_not_exist()),
                 _ => panic!("Invalid error")
             }
         }

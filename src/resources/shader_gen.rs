@@ -49,7 +49,7 @@ fn get_simple_vertex_shader(shader: &SimpleVertexShader) -> String {
         outputs += property.get_attribute_out().as_vertex_shader_out().as_str();
     }
 
-    let mut vertex_code = format!("vec4 _transformed_position = {} * {};\n", shader.get_camera_matrix().name(), shader.get_vertex_in().name());
+    let mut vertex_code = format!("vec4 _transformed_position = {} * vec4({}, 1.0);\n", shader.get_camera_matrix().name(), shader.get_vertex_in().name());
     for property in shader.get_vertex_properties() {
         vertex_code += format!("{} = {};\n", property.get_attribute_out().name(), property.get_attribute_in().name()).as_str();
     }
@@ -66,7 +66,7 @@ fn get_simple_vertex_shader(shader: &SimpleVertexShader) -> String {
     replace_comments(String::from(template_vertex_source), properties)
 }
 
-fn vec3_as_glsl_vec3(value: Vec3) -> String {
+fn _vec3_as_glsl_vec3(value: Vec3) -> String {
     format!("vec3({}, {}, {})", value.x, value.y, value.z)
 }
 fn vec3_as_glsl_vec4(value: Vec3, alpha: f32) -> String {

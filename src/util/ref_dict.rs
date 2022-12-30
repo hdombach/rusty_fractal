@@ -1,7 +1,8 @@
 use std::collections::HashMap;
-use std::fmt::Debug;
 use std::hash::Hash;
 use std::vec::Vec;
+
+use super::error::Error;
 
 pub struct RefDict<K, V> {
     indexes: HashMap<K, RefDictValue>,
@@ -36,9 +37,9 @@ impl<K: Hash + Eq + Clone, V> RefDict<K, V> {
         self.indexes.contains_key(key)
     }
 
-    pub fn add_value(&mut self, key: &K, value: V) -> Result<(), RefDictError> {
+    pub fn add_value(&mut self, key: &K, value: V) -> Result<(), Error> {
         if self.contains(&key) {
-            return Err(RefDictError::ValueAlreadyExists);
+            return Err(Error::value_already_exists());
         }
         let id;
         if self.free_elements.len() > 0 {
@@ -55,17 +56,17 @@ impl<K: Hash + Eq + Clone, V> RefDict<K, V> {
         Ok(())
     }
 
-    pub fn add_reference(&mut self, key: &K) -> Result<usize, RefDictError> {
+    pub fn add_reference(&mut self, key: &K) -> Result<usize, Error> {
         if !self.contains(key) {
-            return Err(RefDictError::ValueDoesNotExist)
+            return Err(Error::value_does_not_exist())
         }
         self.indexes.get_mut(key).unwrap().references += 1;
         Ok(self.indexes[key].id)
     }
 
-    pub fn remove_reference(&mut self, key: &K) -> Result<(), RefDictError> {
+    pub fn remove_reference(&mut self, key: &K) -> Result<(), Error> {
         if !self.contains(key) {
-            return Err(RefDictError::ValueDoesNotExist)
+            return Err(Error::value_does_not_exist())
         }
         self.indexes.get_mut(key).unwrap().references -= 1;
         if self.indexes[key].references == 0 {
@@ -73,12 +74,6 @@ impl<K: Hash + Eq + Clone, V> RefDict<K, V> {
         }
         Ok(())
     }
-}
-
-#[derive(Debug)]
-pub enum RefDictError {
-    ValueAlreadyExists,
-    ValueDoesNotExist,
 }
 
 struct RefDictValue {

@@ -2,8 +2,8 @@ use glow::*;
 
 use crate::resources::container::Container;
 
-use crate::resources::resource_error::ResourceError;
 use crate::structures::camera::Camera;
+use crate::util::error::Error;
 
 use super::shader_gen;
 
@@ -17,7 +17,7 @@ pub struct Object {
 
 impl Object {
 
-    pub fn create(material_id: usize, mesh_id: usize, container: &Container, gl: &glow::Context) -> Result<Self, ResourceError> {
+    pub fn create(material_id: usize, mesh_id: usize, container: &Container, gl: &glow::Context) -> Result<Self, Error> {
         let mut result = Self {
             program: None,
             material_id,
@@ -45,7 +45,7 @@ impl Object {
         }
     }
 
-    unsafe fn load_program(&mut self, container: &Container, gl: &glow::Context) -> Result<(), ResourceError> {
+    unsafe fn load_program(&mut self, container: &Container, gl: &glow::Context) -> Result<(), Error> {
         let program = gl.create_program().expect("Cannot create program");
 
         let mesh = container.get_mesh(self.mesh_id);
@@ -74,7 +74,7 @@ impl Object {
         gl.link_program(program);
 
         if !gl.get_program_link_status(program) {
-            return Err(ResourceError::ProgramError(gl.get_program_info_log(program)));
+            return Err(Error::invalid_gl_program(gl.get_program_info_log(program)));
         }
 
         self.vertex_shader = Some(vertex_shader);
@@ -88,7 +88,7 @@ impl Object {
     unsafe fn get_shader(
         shader_source: &str,
         shader_type: u32,
-        gl: &glow::Context)-> Result<NativeShader, ResourceError>
+        gl: &glow::Context)-> Result<NativeShader, Error>
     {
         let shader = gl.create_shader(shader_type)
             .expect("Cannot create shader");
@@ -96,7 +96,7 @@ impl Object {
         gl.compile_shader(shader);
         if !gl.get_shader_compile_status(shader) {
             let info = gl.get_shader_info_log(shader);
-            return Err(ResourceError::InvalidShaderSource(info));
+            return Err(Error::invalid_shader_source(info));
         }
         Ok(shader)
     }
