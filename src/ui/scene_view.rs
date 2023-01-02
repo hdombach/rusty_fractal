@@ -54,7 +54,7 @@ impl SceneView {
         let drag_delta = response.drag_delta();
         let drag_delta = glam::Vec2::new(drag_delta.x * 0.004, drag_delta.y * 0.004);
 
-        let move_delta = Self::get_move_delta(ui, 0.05);
+        let move_delta = Self::get_move_delta(ui, 0.01);
 
         let resolution = glam::Vec2::new(rect.width(), rect.height());
         scene.lock().get_camera_mut().set_resolution(resolution);

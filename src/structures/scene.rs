@@ -1,4 +1,5 @@
 use glam::Vec3;
+use glow::HasContext;
 
 use crate::{resources::container::Container, util::error::Error};
 use std::vec::Vec;
@@ -19,7 +20,8 @@ impl Scene {
             Err(err) => return Err(err),
         };
         let mut object_ids = Vec::new();
-        object_ids.push(container.get_object_id(String::from("default")).unwrap());
+        //object_ids.push(container.get_object_id("gargoyle").unwrap());
+        object_ids.push(container.get_object_id("monkey").unwrap());
         //object_ids.push(container.get_object_id(String::from("cube_mesh")).unwrap());
         Ok(Self {
             container,
@@ -44,6 +46,10 @@ impl Scene {
     pub fn render(&mut self, gl: &glow::Context) {
         //self.current_rotation_dir = Quat::from_axis_angle(Vec3::new(1.0, 1.0, 0.0), 0.01).normalize() * self.current_rotation_dir;
         //self.main_camera.rotate_camera(Quat::from_axis_angle(self.current_rotation_dir, 0.02).normalize());
+        unsafe {
+            gl.enable(glow::DEPTH_TEST);
+            gl.clear(glow::DEPTH_BUFFER_BIT);
+        }
         for object_id in &self.object_ids {
             self.container.render_object(*object_id, gl, self.get_camera());
         }

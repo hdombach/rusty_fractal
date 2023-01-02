@@ -35,9 +35,6 @@ impl Object {
 
     pub fn render(&self, gl: &glow::Context, container: &Container, camera: &Camera) {
         unsafe {
-            gl.enable(glow::DEPTH_TEST);
-            gl.clear(glow::DEPTH_BUFFER_BIT);
-
             gl.use_program(self.program);
         }
         if let Some(program) = self.program {

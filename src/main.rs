@@ -47,7 +47,7 @@ impl MyApp {
         let shared_state = Rc::new(ui::shared_state::SharedState::new(ui));
         let left_panel_texture_id = shared_state
             .get_container()
-            .get_texture_id(String::from("left_rectangle.png"))
+            .get_texture_id("left_rectangle.png")
             .unwrap();
         let mut left_panel_texture_size = shared_state
             .get_container()
@@ -56,7 +56,7 @@ impl MyApp {
         left_panel_texture_size = 16.0 * left_panel_texture_size / left_panel_texture_size.y;
         let right_panel_texture_id = shared_state
             .get_container()
-            .get_texture_id(String::from("right_rectangle.png"))
+            .get_texture_id("right_rectangle.png")
             .unwrap();
         let mut right_panel_texture_size = shared_state
             .get_container()
