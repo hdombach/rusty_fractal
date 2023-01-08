@@ -4,13 +4,14 @@ use egui::mutex::Mutex;
 use std::{sync::Arc, rc::Rc};
 use crate::structures::scene::Scene;
 
-use super::{ui_traits::*, camera_view::CameraView};
+use super::{ui_traits::*, camera_view::CameraView, scene_panel_view::ScenePanelView};
 
 pub struct SceneView {
     showing_right_panel: bool,
     scene: Arc<Mutex<Scene>>,
     _shared_state: Rc<crate::ui::shared_state::SharedState>,
     camera_view: CameraView,
+    scene_panel_view: ScenePanelView,
 }
 
 impl SceneView {
@@ -19,7 +20,8 @@ impl SceneView {
             showing_right_panel: false,
             scene: scene.clone(),
             _shared_state: shared_state.clone(),
-            camera_view: CameraView::new(scene),
+            camera_view: CameraView::new(scene.clone()),
+            scene_panel_view: ScenePanelView::new(scene.clone(), shared_state),
         }
     }
 }
@@ -29,7 +31,8 @@ impl UiElement for SceneView {
 
         if self.showing_right_panel {
             egui::SidePanel::right("component_right_panel").show_inside(ui, |ui| {
-                self.camera_view.render(ui);
+                //self.camera_view.render(ui);
+                self.scene_panel_view.render(ui);
             });
         }
         self.scene_viewport(ui);

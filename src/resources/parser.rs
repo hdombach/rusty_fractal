@@ -1,8 +1,8 @@
-use std::{path::PathBuf, io::{BufRead, BufReader, Read}, mem::size_of};
+use std::{path::PathBuf, mem::size_of};
 
 use crate::util::error::Error;
 
-use super::{mesh::Mesh, resource_file::{load_file, load_file_raw_vec}};
+use super::{mesh::Mesh, resource_file::load_file_raw_vec};
 
 type ParserIterator<'a> = std::slice::Iter<'a, u8>;
 
@@ -298,7 +298,7 @@ impl<'a> From<&'a TextParser<'a>> for RawParser<'a> {
     }
 }
 
-pub fn parse_mesh(dir: PathBuf, gl: &glow::Context) -> Result<Mesh, Error> {
+pub fn parse_mesh(dir: PathBuf, gl: &glow::Context, name: &str) -> Result<Mesh, Error> {
     let mut data = load_file_raw_vec(dir)?;
     let mut parser = TextParser::create_from_vec(&mut data);
     parser.print_remaining_bytes();
@@ -352,7 +352,7 @@ pub fn parse_mesh(dir: PathBuf, gl: &glow::Context) -> Result<Mesh, Error> {
     //println!("face indexes: {:?}", face_data);
     //println!("vertex data: {:?}", vertex_data);
 
-    return Mesh::create_indexed(vertex_data.to_vec(), face_data, gl, super::mesh::VertexShader::default_simple_with_normal());
+    return Mesh::create_indexed(vertex_data.to_vec(), face_data, gl, super::mesh::VertexShader::default_simple_with_normal(), name);
 }
 
 #[cfg(test)]

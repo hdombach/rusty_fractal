@@ -1,7 +1,7 @@
 use glam::Vec3;
 use glow::HasContext;
 
-use crate::{resources::container::Container, util::error::Error};
+use crate::{resources::{container::{Container, ContainerRef}, object::Object}, util::error::Error};
 use std::vec::Vec;
 
 use super::camera::Camera;
@@ -10,7 +10,7 @@ pub struct Scene {
     main_camera: Camera,
     _current_rotation_dir: Vec3,
     container: Container,
-    object_ids: Vec<usize>,
+    objects: Vec<ContainerRef<Object>>,
 }
 
 impl Scene {
@@ -19,13 +19,13 @@ impl Scene {
             Ok(value) => value,
             Err(err) => return Err(err),
         };
-        let mut object_ids = Vec::new();
-        //object_ids.push(container.get_object_id("gargoyle").unwrap());
-        object_ids.push(container.get_object_id("monkey").unwrap());
-        //object_ids.push(container.get_object_id(String::from("cube_mesh")).unwrap());
+        let mut objects = Vec::new();
+        objects.push(container.get_object("gargoyle").unwrap());
+        objects.push(container.get_object("monkey").unwrap());
+        //objects.push(container.get_object("cube").unwrap());
         Ok(Self {
             container,
-            object_ids,
+            objects,
             main_camera: Camera::new(),
             _current_rotation_dir: Vec3::new(0.0, 0.0, 1.0),
         })
@@ -50,14 +50,8 @@ impl Scene {
             gl.enable(glow::DEPTH_TEST);
             gl.clear(glow::DEPTH_BUFFER_BIT);
         }
-        for object_id in &self.object_ids {
-            self.container.render_object(*object_id, gl, self.get_camera());
-        }
-    }
-
-    pub fn destroy(&self, gl: &glow::Context) {
-        for object_id in &self.object_ids {
-            self.container.get_object(*object_id).destroy(gl);
+        for object in &self.objects {
+            object.lock().unwrap().render(gl, self.get_camera());
         }
     }
 }

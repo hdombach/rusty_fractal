@@ -2,14 +2,29 @@ use glam::Vec3;
 
 use super::shader_attribute::ShaderAttribute;
 
-pub enum Material {
-    SolidColor(SolidColorMaterial),
+pub struct Material {
+    material_type: MaterialType,
+    name: String,
 }
 
 impl Material {
-    pub fn create_solid_color(color: Vec3) -> Self {
-        Material::SolidColor(SolidColorMaterial::create(color))
+    pub fn create_with_type(material_type: MaterialType, name: &str) -> Self {
+        Self {
+            material_type,
+            name: String::from(name),
+        }
     }
+    pub fn create_solid_color(color: Vec3, name: &str) -> Self {
+        Self::create_with_type(MaterialType::SolidColor(SolidColorMaterial::create(color)), name)
+    }
+    pub fn get_material_type(&self) -> &MaterialType {
+        &self.material_type
+    }
+    pub fn get_name(&self) -> &str { &self.name }
+}
+
+pub enum MaterialType {
+    SolidColor(SolidColorMaterial),
 }
 
 pub struct SolidColorMaterial {

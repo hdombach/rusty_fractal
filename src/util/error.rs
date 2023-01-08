@@ -95,11 +95,14 @@ pub enum ErrorKind {
     UnknownIO(std::io::Error),
     UnknownImage(image::ImageError),
     /* Resource Errors */
-    MeshDoesNotExist,
-    MaterialDoesNotExist,
-    ObjectDoesNotExist,
-    TextureDoesNotExist,
-    ObjectAlreadyExists,
+    MeshDoesNotExist(String),
+    MeshAlreadyExists(String),
+    MaterialDoesNotExist(String),
+    MaterialAlreadyExists(String),
+    ObjectDoesNotExist(String),
+    ObjectAlreadyExists(String),
+    TextureDoesNotExist(String),
+    TextureAlreadyExists(String),
     LoadingFile(std::io::Error, String),
     LoadingImage(image::ImageError),
     InvalidShaderSource(String),
@@ -125,11 +128,14 @@ impl std::fmt::Display for ErrorKind {
             Self::UnknownIO(error) => write!(f, "Unknown IO error ({})", error),
             Self::UnknownImage(error) => write!(f, "Unknown image error({})", error),
 
-            Self::MeshDoesNotExist => write!(f, "Mesh does not exist"),
-            Self::MaterialDoesNotExist => write!(f, "Material does not exist"),
-            Self::ObjectDoesNotExist => write!(f, "Object does not exist"),
-            Self::TextureDoesNotExist => write!(f, "Texture does not exist"),
-            Self::ObjectAlreadyExists => write!(f, "Object already exists"),
+            Self::MeshDoesNotExist(mesh_name) => write!(f, "Mesh \"{}\" does not exist", mesh_name),
+            Self::MeshAlreadyExists(mesh_name) => write!(f, "Mesh \"{}\" already exists", mesh_name),
+            Self::MaterialDoesNotExist(material_name) => write!(f, "Material \"{}\" does not exist", material_name),
+            Self::MaterialAlreadyExists(material_name) => write!(f, "Material \"{}\" already exists", material_name),
+            Self::ObjectDoesNotExist(object_name) => write!(f, "Object \"{}\" does not exist", object_name),
+            Self::ObjectAlreadyExists(object_name) => write!(f, "Object \"{}\" already exists", object_name),
+            Self::TextureDoesNotExist(texture_name) => write!(f, "Texture \"{}\" does not exist", texture_name),
+            Self::TextureAlreadyExists(texture_name) => write!(f, "Texture \"{}\" does not exist", texture_name),
             Self::LoadingFile(error, file_name) => write!(f, "Could not find file {} ({})", file_name, error),
             Self::LoadingImage(error) => write!(f, "Problem loading image {}", error),
             Self::InvalidShaderSource(error) => write!(f, "Problem compiling shader ({})", error),
@@ -186,20 +192,29 @@ impl Error {
         Self { kind: ErrorKind::UnknownImage(image_error), options: options::NONE }
     }
 
-    pub fn mesh_does_not_exist() -> Self {
-        Self { kind: ErrorKind::MeshDoesNotExist, options: options::RESOURCE_ERROR }
+    pub fn mesh_does_not_exist(mesh_name: &str) -> Self {
+        Self { kind: ErrorKind::MeshDoesNotExist(String::from(mesh_name)), options: options::RESOURCE_ERROR }
     }
-    pub fn material_does_not_exist() -> Self {
-        Self { kind: ErrorKind::MaterialDoesNotExist, options: options::RESOURCE_ERROR }
+    pub fn mesh_already_exists(mesh_name: &str) -> Self {
+        Self { kind: ErrorKind::MeshAlreadyExists(String::from(mesh_name)), options: options::RESOURCE_ERROR }
     }
-    pub fn object_does_not_exist() -> Self {
-        Self { kind: ErrorKind::ObjectDoesNotExist, options: options::RESOURCE_ERROR }
+    pub fn material_does_not_exist(material_name: &str) -> Self {
+        Self { kind: ErrorKind::MaterialDoesNotExist(String::from(material_name)), options: options::RESOURCE_ERROR }
     }
-    pub fn texture_does_not_exist() -> Self {
-        Self { kind: ErrorKind::TextureDoesNotExist, options: options::RESOURCE_ERROR }
+    pub fn material_already_exists(material_name: &str) -> Self {
+        Self { kind: ErrorKind::MaterialAlreadyExists(String::from(material_name)), options: options::RESOURCE_ERROR }
     }
-    pub fn object_already_exists() -> Self {
-        Self { kind: ErrorKind::ObjectAlreadyExists, options: options::RESOURCE_ERROR }
+    pub fn object_does_not_exist(object_name: &str) -> Self {
+        Self { kind: ErrorKind::ObjectDoesNotExist(String::from(object_name)), options: options::RESOURCE_ERROR }
+    }
+    pub fn object_already_exists(object_name: &str) -> Self {
+        Self { kind: ErrorKind::ObjectAlreadyExists(String::from(object_name)), options: options::RESOURCE_ERROR }
+    }
+    pub fn texture_does_not_exist(texture_name: &str) -> Self {
+        Self { kind: ErrorKind::TextureDoesNotExist(String::from(texture_name)), options: options::RESOURCE_ERROR }
+    }
+    pub fn texture_already_exists(texture_name: &str) -> Self {
+        Self { kind: ErrorKind::TextureAlreadyExists(String::from(texture_name)), options: options::RESOURCE_ERROR }
     }
     pub fn loading_file(std_error: std::io::Error, file_name: String) -> Self {
         Self { kind: ErrorKind::LoadingFile(std_error, file_name), options: options::RESOURCE_ERROR }
@@ -240,7 +255,6 @@ impl Error {
         Self { kind: ErrorKind::ParserUnknownStr(ParserUnknownStrContent::create(expected_str, received_str, line_number, column_number)), options: options::PARSER_ERROR }
     }
     pub fn parser_end_of_file() -> Self {
-        panic!();
         Self { kind: ErrorKind::ParserEndOfFile(), options: options::PARSER_ERROR }
     }
     pub fn parser_invalid_ascii_int(received_word: String, line_number: usize, column_number: usize) -> Self {

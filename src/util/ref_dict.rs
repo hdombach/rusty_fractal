@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::slice;
 use std::vec::Vec;
 
 use super::error::Error;
@@ -24,6 +25,9 @@ impl<K: Hash + Eq + Clone, V> RefDict<K, V> {
     pub fn get_value(&self, index: usize) -> &V {
         &self.elements[index]
     }
+    pub fn get_mut_value(&mut self, index: usize) -> &mut V {
+        &mut self.elements[index]
+    }
 
     pub fn get_value_id(&self, key: K) -> Option<usize> {
         if self.indexes.contains_key(&key) {
@@ -35,6 +39,10 @@ impl<K: Hash + Eq + Clone, V> RefDict<K, V> {
 
     pub fn contains(&self, key: &K) -> bool {
         self.indexes.contains_key(key)
+    }
+
+    pub fn get_keys(&self) -> Vec<&K> {
+        self.indexes.keys().collect()
     }
 
     pub fn add_value(&mut self, key: &K, value: V) -> Result<(), Error> {

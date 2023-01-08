@@ -1,10 +1,10 @@
 use glam::Vec3;
 
-use super::{resource_file::load_shader, mesh::{Mesh, SimpleVertexShader, VertexShader}, material::{Material, SolidColorMaterial}};
+use super::{resource_file::load_shader, mesh::{Mesh, SimpleVertexShader, VertexShader}, material::{Material, SolidColorMaterial, MaterialType}};
 
 pub fn gen_material_shader(material: &Material, mesh: &Mesh) -> String {
-    match material {
-        Material::SolidColor(solid_material) => get_solid_color_material_shader(solid_material, mesh),
+    match material.get_material_type() {
+        MaterialType::SolidColor(solid_material) => get_solid_color_material_shader(solid_material, mesh),
     }
 }
 

@@ -6,3 +6,4 @@ pub mod resource_file;
 pub mod shader_gen;
 pub mod shader_attribute;
 pub mod parser;
+pub mod texture;

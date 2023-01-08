@@ -116,6 +116,6 @@ pub fn load_file_raw_vec(dir: PathBuf) -> Result<Vec<u8>, Error> {
         },
     };
     let mut result = Vec::new();
-    file.read_to_end(&mut result); //TODO do stuff with error handling
+    file.read_to_end(&mut result)?;
     return Ok(result);
 }

@@ -1,6 +1,8 @@
 use glow::*;
 
-use crate::resources::container::Container;
+use crate::resources::container::{Container, ContainerRef};
+use crate::resources::material::Material;
+use crate::resources::mesh::Mesh;
 
 use crate::structures::camera::Camera;
 use crate::util::error::Error;
@@ -8,20 +10,22 @@ use crate::util::error::Error;
 use super::shader_gen;
 
 pub struct Object {
+    name: String,
     program: Option<NativeProgram>,
-    material_id: usize,
-    mesh_id: usize,
+    material: ContainerRef<Material>,
+    mesh: ContainerRef<Mesh>,
     vertex_shader: Option<NativeShader>,
     fragment_shader: Option<NativeShader>,
 }
 
 impl Object {
 
-    pub fn create(material_id: usize, mesh_id: usize, container: &Container, gl: &glow::Context) -> Result<Self, Error> {
+    pub fn create(material: ContainerRef<Material>, mesh: ContainerRef<Mesh>, container: &Container, gl: &glow::Context, name: &str) -> Result<Self, Error> {
         let mut result = Self {
+            name: String::from(name),
             program: None,
-            material_id,
-            mesh_id,
+            material,
+            mesh,
             vertex_shader: None,
             fragment_shader: None,
         };
@@ -33,22 +37,22 @@ impl Object {
         Ok(result)
     }
 
-    pub fn render(&self, gl: &glow::Context, container: &Container, camera: &Camera) {
+    pub fn render(&self, gl: &glow::Context, camera: &Camera) {
         unsafe {
             gl.use_program(self.program);
         }
         if let Some(program) = self.program {
-            container.get_mesh(self.mesh_id).render(gl, camera, &program);
+            self.mesh.lock().unwrap().render(gl, camera, &program);
         }
     }
 
     unsafe fn load_program(&mut self, container: &Container, gl: &glow::Context) -> Result<(), Error> {
         let program = gl.create_program().expect("Cannot create program");
 
-        let mesh = container.get_mesh(self.mesh_id);
-        let material = container.get_material(self.material_id);
+        let mesh = self.mesh.lock().unwrap();
+        let material = self.material.lock().unwrap();
 
-        let vertex_shader_source = shader_gen::gen_vertex_shader(mesh);
+        let vertex_shader_source = shader_gen::gen_vertex_shader(&mesh);
         println!("the vertex shader is:\n{}", vertex_shader_source);
 
         let vertex_shader = match Self::get_shader(&vertex_shader_source, glow::VERTEX_SHADER, gl) {
@@ -56,7 +60,7 @@ impl Object {
             Err(err) => return Err(err),
         };
 
-        let fragment_shader_source = shader_gen::gen_material_shader(material, mesh);
+        let fragment_shader_source = shader_gen::gen_material_shader(&material, &mesh);
         println!("the fragment shader is:\n{}", fragment_shader_source);
 
         let fragment_shader = match Self::get_shader(&fragment_shader_source, glow::FRAGMENT_SHADER, gl) {
@@ -97,6 +101,8 @@ impl Object {
         }
         Ok(shader)
     }
+
+    pub fn get_name(&self) -> &str { &self.name }
 
 
     pub fn destroy(&self, gl: &glow::Context) {

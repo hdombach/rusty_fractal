@@ -1,7 +1,7 @@
 use glow::*;
 use crate::{structures::camera::Camera, util::error::Error};
 
-use super::{shader_attribute::{ShaderAttribute, ShaderAttributePair}};
+use super::shader_attribute::{ShaderAttribute, ShaderAttributePair};
 
 pub enum VertexShader {
     Simple(SimpleVertexShader),
@@ -218,14 +218,15 @@ pub struct Mesh {
    vao: NativeVertexArray,
    index_buffer: Option<NativeBuffer>,
    shader: VertexShader,
+   name: String,
 }
 
 impl Mesh {
-    pub fn create(vertexes: Vec<f32>, gl: &glow::Context) -> Result<Self, Error> {
-        Self::create_with_shader(vertexes, gl, VertexShader::default_simple())
+    pub fn create(vertexes: Vec<f32>, gl: &glow::Context, name: &str) -> Result<Self, Error> {
+        Self::create_with_shader(vertexes, gl, VertexShader::default_simple(), name)
     }
 
-    pub fn create_with_shader(vertexes: Vec<f32>, gl: &glow::Context, shader: VertexShader) -> Result<Self, Error> {
+    pub fn create_with_shader(vertexes: Vec<f32>, gl: &glow::Context, shader: VertexShader, name: &str) -> Result<Self, Error> {
         let (vao, vbo);
         unsafe {
             (vao, vbo) = match Mesh::create_vertex_buffer(vertexes.clone(), &shader, gl) {
@@ -240,10 +241,11 @@ impl Mesh {
             vao,
             index_buffer: None,
             shader,
+            name: String::from(name),
         })
     }
 
-    pub fn create_indexed(vertexes: Vec<f32>, indexes: Vec<u32>, gl: &glow::Context, shader: VertexShader) -> Result<Self, Error> {
+    pub fn create_indexed(vertexes: Vec<f32>, indexes: Vec<u32>, gl: &glow::Context, shader: VertexShader, name: &str) -> Result<Self, Error> {
         let (vao, vbo, vertex_index_buffer);
         unsafe {
             (vao, vbo) = match Mesh::create_vertex_buffer(vertexes.clone(), &shader, gl) {
@@ -262,6 +264,7 @@ impl Mesh {
             vao,
             index_buffer: Some(vertex_index_buffer),
             shader,
+            name: String::from(name),
         })
     }
 
@@ -276,6 +279,8 @@ impl Mesh {
     fn get_vertex_count(&self) -> i32 {
         (self.vertexes.len() / 3) as i32
     }
+
+    pub fn get_name(&self) -> &str { &self.name }
 
     pub unsafe fn get_raw(&self) -> &[u8] {
         std::slice::from_raw_parts(
@@ -324,7 +329,7 @@ impl Mesh {
 
     unsafe fn create_vertex_buffer(
         vertexes: Vec<f32>,
-        shader: &VertexShader,
+        _shader: &VertexShader,
         gl: &glow::Context
     ) -> Result<(NativeVertexArray, NativeBuffer), Error> {
         let vao = match gl.create_vertex_array() {
